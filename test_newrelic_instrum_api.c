@@ -1,8 +1,12 @@
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <linux/limits.h>
+#include <sys/stat.h>
+
 
 #include "newrelic_common.h"
 #include "newrelic_transaction.h"
@@ -10,29 +14,69 @@
 
 
 int
-generate_lists_of_files(const char* tmp_file, int newrelic_transaction);
+usage_and_exit(void);
+
+
+void*
+main_worker_function(void* p);
 
 
 int
-process_lists_of_files(const char* tmp_file, int newrelic_transaction,
+generate_lists_of_files(const char* tmp_file, long newrelic_transaction);
+
+
+int
+process_lists_of_files(const char* tmp_file, long newrelic_transaction,
                        long* max_exec_size_found, char* max_exec_fname);
 
 
 int
-main(int arc, char** argv)
+main(int argc, char** argv)
 {
+    if (argc != 2 ||
+          strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
+        usage_and_exit();
+
+    char newrelic_license_key[256];
+    strncpy(newrelic_license_key, argv[1], sizeof newrelic_license_key);
+
     newrelic_register_message_handler(newrelic_message_handler);
 
-    newrelic_init("here-goes-the-NewRelic-license-key-string",
-                  "My Application", "C", "4.8");
+    newrelic_init(newrelic_license_key, "My Application", "C", "4.8");
 
+    pthread_t worker_thread;
+
+    /* create the app worker thread to execute "main_worker_function()" */
+
+    /*
+    if(pthread_create(&worker_thread, NULL, main_worker_function, NULL)) {
+        fprintf(stderr, "Error creating thread\n");
+        return 1;
+    }
+    */
+
+    main_worker_function(NULL);
+
+    /* wait for the application worker thread to finish */
+    /*
+    if(pthread_join(worker_thread, NULL)) {
+        fprintf(stderr, "Error joining thread\n");
+        return 2;
+    }
+    */
+
+    return 0;
+}
+
+void*
+main_worker_function(void *p)
+{
     int return_code;
 
     long newr_transxtion_id = newrelic_transaction_begin();
     if (newr_transxtion_id < 0)
         fprintf(stderr, "ERROR: newrelic_transaction_begin() returned %d\n",
                         newr_transxtion_id);
-
 
     /* Naming transactions is optional.
      * Use caution when naming transactions. Issues come about when the
@@ -82,19 +126,29 @@ main(int arc, char** argv)
     if (return_code == 0) {
         long max_fsize;
         char max_fname[PATH_MAX];
-        process_lists_of_files(temp_file, newr_transxtion_id, &max_fsize, &max_fname);
+        process_lists_of_files(temp_file, newr_transxtion_id, &max_fsize,
+                               max_fname);
     }
 
+    /* Clean-up: remove temporary file */
+    struct stat buf;
+    if (stat(temp_file, &buf) == 0) {
+       return_code = unlink(temp_file);
+       if (return_code != 0) 
+          fprintf(stderr, "ERROR: unlink(%s) failed: error code: %d\n",
+                  temp_file, return_code);
+    }
     free(temp_file);
 
-    int error_code = newrelic_transaction_end(newr_transxtion_id);
+    /* Finnish the NewRelic transaction */
+    return_code = newrelic_transaction_end(newr_transxtion_id);
 
-    return 0;
+    return NULL;
 }
 
 
 int
-generate_lists_of_files(const char* tmp_file, int newrelic_transaction)
+generate_lists_of_files(const char* tmp_file, long newrelic_transaction)
 {
     long newr_segm_external_find = 0;
     if (newrelic_transaction >= 0) {
@@ -137,7 +191,7 @@ generate_lists_of_files(const char* tmp_file, int newrelic_transaction)
 
 
 int
-process_lists_of_files(const char* tmp_file, int newrelic_transaction,
+process_lists_of_files(const char* tmp_file, long newrelic_transaction,
                        long* max_exec_size_found, char* max_exec_fname)
 {
     long newr_segm_internal_proc = 0;
@@ -200,6 +254,20 @@ process_lists_of_files(const char* tmp_file, int newrelic_transaction,
     }
 
     return (curr_max_fname[0] != 0) ? 0: -1 ;
+}
+
+
+
+int
+usage_and_exit(void)
+{
+    printf("Usage:\n"
+           "      test_embedded_newrelic_instrum   newrelic_license_key\n"
+           "                                        Run and record performance"
+                                                  " under this N.R. key\n"
+           "      test_embedded_newrelic_instrum   [-h|--help]\n"
+           "                                        Show this usage help\n");
+    exit(1);
 }
 
 

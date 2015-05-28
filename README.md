@@ -49,7 +49,7 @@ Compile the test instrumented program (`Makefile` will be due shortly):
              test_embedded_newrelic_instrum.c  \
           -I  "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/include/  \
           -L  "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/lib/  \
-          -l  newrelic-transaction  -l  newrelic-common  -l newrelic-collector-client 
+          -l  newrelic-transaction  -l  newrelic-common  -l newrelic-collector-client -l pthread
 
 Run the instrumented program:
 
