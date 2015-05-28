@@ -1,4 +1,4 @@
-# NewRelic_instrumentation_SDK
+# NewRelic Instrumentation SDK
 
 Example of the `NewRelic Instrumentation SDK` in C
 
