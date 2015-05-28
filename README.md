@@ -24,7 +24,8 @@ Download the `NewRelic Instrumentation SDK` for C/C++:
 Copy the NewRelic SDK's `log4cplus.properties` to standard location (could be left in current directory where the instrumented program runs):
 
      mkdir  ~/.newrelic/
-     cp   "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/config/log4cplus.properties   ~/.newrelic/
+     cp   "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/config/log4cplus.properties \
+          ~/.newrelic/
       
      # Optionally, increase the debug level in this 'log4cplus.properties'
      # (debug messages are written by default to files in /tmp/ -besides to stdout)
