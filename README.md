@@ -8,6 +8,14 @@ This project is a *work in progress*. The implementation is *incomplete* and sub
 
 This is the first version of this document.
 
+# Create a free NewRelic account
+
+Create a free NewRelic account if you don't have one already:
+
+    http://newrelic.com/application-monitoring/pricing
+
+Choose the 'Lite' option.
+
 # How to install
 
 Download the `NewRelic Instrumentation SDK` for C/C++:
@@ -54,6 +62,13 @@ Optional:
      rpm -Uvh https://yum.newrelic.com/pub/newrelic/el5/x86_64/newrelic-repo-5-3.noarch.rpm
      yum install newrelic-sysmond
 
+# NewRelic SDK Documentation
+
+The documentation for the NewRelic Agent SDK in C/C++ is near the bottom of:
+
+     https://docs.newrelic.com/docs/agents
+
+(In this URL, above SDK entries, are the documentation for the instrumentation into NewRelic of your Java, Python, PHP, .Net, and Ruby applications.)
 
 # Some scattered notes about the NewRelic SDK in the first version of this document
 
