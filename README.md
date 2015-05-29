@@ -54,7 +54,10 @@ Compile the test instrumented program (`Makefile` will be due shortly):
 Run the instrumented program:
 
      export LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/lib/
-     ./test_embedded_newrelic_instrum
+     ./test_embedded_newrelic_instrum  "NewRelic_License_Key"
+
+The argument `"NewRelic_License_Key"` is the account to which this test program must record the 
+performance of its transaction in NewRelic.
 
 
 Optional:
