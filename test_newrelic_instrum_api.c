@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,6 +20,11 @@ usage_and_exit(void);
 
 void*
 main_worker_function(void* p);
+
+
+void
+record_newrelic_metric_from_first_value_of_kernel_stat_file(char * kernel_file,
+                char * newrelic_metric);
 
 
 int
@@ -43,20 +49,22 @@ main(int argc, char** argv)
     newrelic_register_message_handler(newrelic_message_handler);
 
     newrelic_init(newrelic_license_key, "My Application", "C", "4.8");
+    // newrelic_enable_instrumentation(0);  /* 0 is enable */
 
-    pthread_t worker_thread;
 
     /* create the app worker thread to execute "main_worker_function()" */
 
     /*
      * Our pthread_create() -commented, below- doesn't seem to be strictly
-     * necessary: it is the embedded mode of the NewRelic SDK the one 
-     * which starts the SDK engine in a separate pthread (at least in the 
+     * necessary: it is the embedded mode of the NewRelic SDK the one
+     * which starts the SDK engine in a separate pthread (at least in the
      * NewRelic Agent SDK version 0.16.1), and tracing reveals that this
      * NewRelic thread is the one which connects to the NewRelic
      * collector site ("collector*.newrelic.com") and sends the stats
      * to it.
      *
+
+    pthread_t worker_thread;
     int err = pthread_create(&worker_thread, NULL, main_worker_function, NULL);
     if (err != 0)) {
         fprintf(stderr, "ERROR: couldn't create our worker thread:"
@@ -83,9 +91,10 @@ main_worker_function(void *p)
 {
     int return_code;
 
+    fprintf(stderr, "DEBUG: about to call newrelic_transaction_begin()\n");
     long newr_transxtion_id = newrelic_transaction_begin();
     if (newr_transxtion_id < 0)
-        fprintf(stderr, "ERROR: newrelic_transaction_begin() returned %d\n",
+        fprintf(stderr, "ERROR: newrelic_transaction_begin() returned %ld\n",
                         newr_transxtion_id);
 
     /* Naming transactions is optional.
@@ -108,10 +117,19 @@ main_worker_function(void *p)
                             "returned %d\n", return_code);
 
          return_code = newrelic_transaction_set_category(newr_transxtion_id,
-                                                         "backend_processing");
+                                                     "BackendTrans/Stat/find");
          if (return_code < 0)
             fprintf(stderr, "ERROR: newrelic_transaction_set_category() "
                             "returned %d\n", return_code);
+
+         /* Record an attribute for this transaction: the start time */
+         char start_time[16];
+         snprintf(start_time, sizeof start_time, "%u",
+                    (unsigned)time(NULL));
+
+         return_code = newrelic_transaction_add_attribute(newr_transxtion_id,
+                                                "tx_start_time", start_time);
+
     }
 
     /*
@@ -144,14 +162,20 @@ main_worker_function(void *p)
     struct stat buf;
     if (stat(temp_file, &buf) == 0) {
        return_code = unlink(temp_file);
-       if (return_code != 0) 
+       if (return_code != 0)
           fprintf(stderr, "ERROR: unlink(%s) failed: error code: %d\n",
                   temp_file, return_code);
     }
     free(temp_file);
 
     /* Finnish the NewRelic transaction */
-    return_code = newrelic_transaction_end(newr_transxtion_id);
+    if (newr_transxtion_id >= 0) {
+         fprintf(stderr, "DEBUG: about to call newrelic_transaction_end()\n");
+         return_code = newrelic_transaction_end(newr_transxtion_id);
+         if (return_code < 0)
+         fprintf(stderr, "ERROR: newrelic_transaction_end() "
+                         "returned %d\n", return_code);
+    }
 
     return NULL;
 }
@@ -168,7 +192,7 @@ generate_lists_of_files(const char* tmp_file, long newrelic_transaction)
                                                 "localhost", "find");
         if (newr_segm_external_find < 0)
             fprintf(stderr, "ERROR: newrelic_segment_external_begin() "
-                            "returned %d\n", newr_segm_external_find);
+                            "returned %ld\n", newr_segm_external_find);
     }
 
     char external_command[32*1024];
@@ -180,6 +204,25 @@ generate_lists_of_files(const char* tmp_file, long newrelic_transaction)
 
     int ext_cmd_ret = system(external_command);
 
+    /* Just after running the "external_command" (find / -perm -100 ...)
+     * record two custom measures up to NewRelic, as an example.
+     * Ie., how busy was the cache left.
+     * TODO: the load left on the VM/disks. But the disks and
+     * filesystems can be different, so this is not an simple
+     * task for this NewRelic SDK test.
+     */
+
+     record_newrelic_metric_from_first_value_of_kernel_stat_file(
+            "/proc/sys/fs/dentry-state",
+            "cached_dentries_metric"
+          );
+
+     record_newrelic_metric_from_first_value_of_kernel_stat_file(
+            "/proc/sys/fs/inode-state",
+            "cached_inodes_metric"
+          );
+
+    /* end this NewRelic segment */
     if (newrelic_transaction >= 0 && newr_segm_external_find >= 0) {
         int ret_code =  newrelic_segment_end(newrelic_transaction,
                                              newr_segm_external_find);
@@ -199,6 +242,38 @@ generate_lists_of_files(const char* tmp_file, long newrelic_transaction)
 }
 
 
+void
+record_newrelic_metric_from_first_value_of_kernel_stat_file(char * kernel_file,
+                char * newrelic_metric)
+{
+     int error_code;
+
+     FILE* f = fopen(kernel_file, "r");
+     if (!f)  {
+         char err_msg[1024];
+         strerror_r(errno, err_msg, sizeof err_msg);
+         fprintf(stderr, "ERROR: fopen(%s) returned: %s\n", kernel_file,
+                         err_msg);
+         return;
+     }
+
+     char line[1024];
+     if (fgets(line, sizeof line, f) != NULL) {
+             long interesting_kernel_stat;
+             char rest[1024];
+             sscanf (line, "%ld %s", &interesting_kernel_stat, rest);
+
+             error_code = newrelic_record_metric(newrelic_metric,
+                                                 interesting_kernel_stat);
+             if (error_code != 0)
+                 fprintf(stderr, "ERROR: newrelic_record_metric(%s) "
+                                 "returned %d\n", newrelic_metric,
+                                 error_code);
+     }
+
+     fclose(f);
+}
+
 
 int
 process_lists_of_files(const char* tmp_file, long newrelic_transaction,
@@ -212,7 +287,7 @@ process_lists_of_files(const char* tmp_file, long newrelic_transaction,
                                            "processing_list_execs");
         if (newr_segm_internal_proc < 0)
             fprintf(stderr, "ERROR: newrelic_segment_external_begin() "
-                            "returned %d\n", newr_segm_internal_proc);
+                            "returned %ld\n", newr_segm_internal_proc);
     }
 
     long curr_max_fsize = -1;
@@ -279,5 +354,4 @@ usage_and_exit(void)
            "                                        Show this usage help\n");
     exit(1);
 }
-
 
