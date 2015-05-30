@@ -1,6 +1,6 @@
 # NewRelic Instrumentation SDK
 
-Example of the `NewRelic Instrumentation SDK` in C
+Example of the `NewRelic Instrumentation SDK` in C, with a test application instrumented with `NewRelic embedded mode` in its Agent SDK.
 
 # WIP
 
@@ -10,15 +10,16 @@ This is the first version of this document.
 
 # Create a free NewRelic account
 
-Create a free NewRelic account if you don't have one already:
+To run this test application, you need to create (or have already) a NewRelic account.
+If you don't have one already, you may create a free NewRelic account:
 
     http://newrelic.com/application-monitoring/pricing
 
 Choose the 'Lite' option.
 
-# How to install
+# How to install the NewRelic Agent SDK and compile this application
 
-Download the `NewRelic Instrumentation SDK` for C/C++:
+To compile this test application you need to download first the `NewRelic Instrumentation SDK` for C/C++:
 
     NR_DEST_DIR=~/src/newrelic_agent_sdk_installation/
     
