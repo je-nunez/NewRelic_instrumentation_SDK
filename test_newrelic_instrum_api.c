@@ -54,7 +54,7 @@ main(int argc, char** argv)
      * which starts the SDK engine in a separate pthread (at least in the 
      * NewRelic Agent SDK version 0.16.1), and tracing reveals that this
      * NewRelic thread is the one which connects to the NewRelic
-     * collector site ("collector.newrelic.com") and sends the stats
+     * collector site ("collector*.newrelic.com") and sends the stats
      * to it.
      *
     int err = pthread_create(&worker_thread, NULL, main_worker_function, NULL);
