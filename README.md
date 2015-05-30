@@ -1,6 +1,6 @@
 # NewRelic Instrumentation SDK
 
-Example of the `NewRelic Instrumentation SDK` in C, with a test application instrumented with `NewRelic embedded mode` in its Agent SDK.
+Example of the `NewRelic Instrumentation SDK` in C, with a test application instrumented in the `NewRelic SDK embedded mode` (ie., no external NewRelic collector daemon to sample the application).
 
 # WIP
 
