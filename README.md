@@ -24,7 +24,7 @@ To compile this test application you need to download and install first the `New
     $ make install_newrelic_agent_sdk
 
 This will download and install the NewRelic Agent SDK under `$HOME/src/newrelic_agent_sdk_installation/`, and create
-also a new subdirectory `$HOME/.newrelic/' and file `$HOME/.newrelic/log4cplus.properties` with the debug log settings
+also a new subdirectory `$HOME/.newrelic/` and file `$HOME/.newrelic/log4cplus.properties` with the debug log settings
 (which write to `standard-error` and to `/tmp/newrelic-*.log` files).
 
 To build the test application which calls the embedded NewRelic instrumenstation, run:
