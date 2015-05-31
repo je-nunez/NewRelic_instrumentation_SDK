@@ -19,52 +19,35 @@ Choose the 'Lite' option.
 
 # How to install the NewRelic Agent SDK and compile this application
 
-To compile this test application you need to download first the `NewRelic Instrumentation SDK` for C/C++:
+To compile this test application you need to download and install first the `NewRelic Agent SDK` for C/C++:
 
-    NR_DEST_DIR=~/src/newrelic_agent_sdk_installation/
-    
-    mkdir  -p "${NR_DEST_DIR}"
-    curl  http://download.newrelic.com/agent_sdk/nr_agent_sdk-v0.16.1.0-beta.x86_64.tar.gz \
-          -o  "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64.tar.gz
-    
-    cd   "${NR_DEST_DIR}"
-    tar  xzf  nr_agent_sdk-v0.16.1.0-beta.x86_64.tar.gz
+    $ make install_newrelic_agent_sdk
 
-Copy the NewRelic SDK's `log4cplus.properties` to standard location (could be left in current directory where the instrumented program runs):
+This will download and install the NewRelic Agent SDK under `$HOME/src/newrelic_agent_sdk_installation/`, and create
+also a new subdirectory `$HOME/.newrelic/' and file `$HOME/.newrelic/log4cplus.properties` with the debug log settings
+(which write to `standard-error` and to `/tmp/newrelic-*.log` files).
 
-     mkdir  ~/.newrelic/
-     cp   "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/config/log4cplus.properties \
-          ~/.newrelic/
-      
-     # Optionally, increase the debug level in this 'log4cplus.properties'
-     # (debug messages are written by default to files in /tmp/ -besides to stdout)
-     #
-     ##     Substitute in ~/.newrelic/log4cplus.properties:
-     ##                log4cplus.logger.com.newrelic=info, stdout
-     ##     to:
-     ##                log4cplus.logger.com.newrelic=debug, stdout
+To build the test application which calls the embedded NewRelic instrumenstation, run:
 
-Compile the test instrumented program (`Makefile` will be due shortly):
+    $ make test_newrelic_instrum_api
 
-     cc  -o  test_embedded_newrelic_instrum  \
-             test_embedded_newrelic_instrum.c  \
-          -I  "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/include/  \
-          -L  "${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/lib/  \
-          -l  newrelic-transaction  -l  newrelic-common  -l newrelic-collector-client -l pthread
+It will copy the source file `test_embedded_newrelic_instrum.c` to `$HOME/src/newrelic_agent_sdk_installation/` and
+compile it there.
 
-Run the instrumented program:
+To run the test application:
 
-     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH":"${NR_DEST_DIR}"/nr_agent_sdk-v0.16.1.0-beta.x86_64/lib/
-     ./test_embedded_newrelic_instrum  "NewRelic_License_Key"
+    $ export NEW_RELIC_LICENSE_KEY="the_code_of_my_NewRelic_License_Key"
+     
+    $ make run_a_test
 
-The argument `"NewRelic_License_Key"` is the account to which this test program must record the 
-performance of its transaction in NewRelic.
+Note that the environment variable `NEW_RELIC_LICENSE_KEY` is referred by the Makefile, but not by the source code
+`test_embedded_newrelic_instrum.c` itself.
 
+The test program what it does is a `find / -perm -100 -printf '%s %p'` (it could have been any other test action)
+and then sorts it to find the biggest executable in the system. So please, don't run this test program on a 
+system which has to many files, or has mounted some remote filesystems (like NFS), etc. Or modify the test 
+program around the variable `external_command` inside it.
 
-Optional:
-
-     rpm -Uvh https://yum.newrelic.com/pub/newrelic/el5/x86_64/newrelic-repo-5-3.noarch.rpm
-     yum install newrelic-sysmond
 
 # NewRelic SDK Documentation
 
@@ -100,4 +83,5 @@ Transaction traces are automatically generated when transactions exceed the tran
 The process to create a Transaction Trace is simple:
 * If the transaction duration is longer than the transaction trace threshold, then a trace will be collected.
 * Note: a maximum of two traces will be sent to New Relic per minute.
+
 
