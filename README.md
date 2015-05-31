@@ -44,9 +44,12 @@ Note that the environment variable `NEW_RELIC_LICENSE_KEY` is referred by the Ma
 `test_embedded_newrelic_instrum.c` itself.
 
 The test program what it does is a `find / -perm -100 -printf '%s %p'` (it could have been any other test action)
-and then sorts it to find the biggest executable in the system. So please, don't run this test program on a 
-system which has to many files, or has mounted some remote filesystems (like NFS), etc. Or modify the test 
-program around the variable `external_command` inside it.
+and then sorts it to find the biggest executable in the system. It records segments times in the NewRelic transaction
+and also some custom Linux kernel measures. 
+
+More importantly, since this test program uses a `find / -perm -100 ...`, be careful with running this test program 
+on a system with too many files, or has mounted some remote filesystems (like NFS), etc. Or modify the test program 
+around the variable `external_command` inside it to run your test task you want to measure.
 
 
 # NewRelic SDK Documentation
