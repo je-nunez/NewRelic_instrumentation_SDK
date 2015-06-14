@@ -37,7 +37,7 @@ compile it there.
 To run the test application:
 
     $ export NEW_RELIC_LICENSE_KEY="the_code_of_my_NewRelic_License_Key"
-     
+
     $ make run_a_test
 
 Note that the environment variable `NEW_RELIC_LICENSE_KEY` is referred by the Makefile, but not by the source code
@@ -45,11 +45,18 @@ Note that the environment variable `NEW_RELIC_LICENSE_KEY` is referred by the Ma
 
 The test program what it does is a `find / -perm -100 -printf '%s %p'` (it could have been any other test action)
 and then sorts it to find the biggest executable in the system. It records segments times in the NewRelic transaction
-and also some custom Linux kernel measures. 
+and also some custom Linux kernel measures.
 
-More importantly, since this test program uses a `find / -perm -100 ...`, be careful with running this test program 
-on a system with too many files, or has mounted some remote filesystems (like NFS), etc. Or modify the test program 
+More importantly, since this test program uses a `find / -perm -100 ...`, be careful with running this test program
+on a system with too many files, or has mounted some remote filesystems (like NFS), etc. Or modify the test program
 around the variable `external_command` inside it to run your test task you want to measure.
+
+(Note: In reference to the custom Linux measures that this program sends to NewRelic, if you want, it is possible
+that your test be a `perf record -g ...` instead of the two NewRelic segments here, `find / -perm -100 -printf '%s %p'`
+and then sorting by size, so with `perf record -g ...` the segments inside the NewRelic transaction can be the
+duration of each stack frame in the call stack, and then letting NewRelic do a flame-graph per segment (stack-frame).
+The posibilities are endless, but this test program is just for the capabilities of instrumenting your application
+with the `NewRelic Agent SDK in embedded mode`, so it can't be a complex program.)
 
 
 # NewRelic SDK Documentation
