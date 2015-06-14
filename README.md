@@ -51,7 +51,7 @@ More importantly, since this test program uses a `find / -perm -100 ...`, be car
 on a system with too many files, or has mounted some remote filesystems (like NFS), etc. Or modify the test program
 around the variable `external_command` inside it to run your test task you want to measure.
 
-(Note: In reference to the custom Linux measures that this program sends to NewRelic, if you want, it is possible
+(Note: In reference to the custom Linux kernel measures that this program sends to NewRelic, if you want, it is possible
 that your test be a `perf record -g ...` Linux performance counters instead of the two NewRelic segments here,
 `find / -perm -100 -printf '%s %p'` and then sorting by size, so with `perf record -g ...` the segments inside the
 NewRelic transaction can be the duration of each stack frame in the call stack as returned by the Linux performance
