@@ -52,11 +52,12 @@ on a system with too many files, or has mounted some remote filesystems (like NF
 around the variable `external_command` inside it to run your test task you want to measure.
 
 (Note: In reference to the custom Linux measures that this program sends to NewRelic, if you want, it is possible
-that your test be a `perf record -g ...` instead of the two NewRelic segments here, `find / -perm -100 -printf '%s %p'`
-and then sorting by size, so with `perf record -g ...` the segments inside the NewRelic transaction can be the
-duration of each stack frame in the call stack, and then letting NewRelic do a flame-graph per segment (stack-frame).
-The posibilities are endless, but this test program is just for the capabilities of instrumenting your application
-with the `NewRelic Agent SDK in embedded mode`, so it can't be a complex program.)
+that your test be a `perf record -g ...` Linux performance counters instead of the two NewRelic segments here,
+`find / -perm -100 -printf '%s %p'` and then sorting by size, so with `perf record -g ...` the segments inside the
+NewRelic transaction can be the duration of each stack frame in the call stack as returned by the Linux performance
+counters, and then letting NewRelic do a flame-graph per segment (stack-frame). The posibilities are endless, but
+this test program is just for the capabilities of instrumenting your application with the `NewRelic Agent SDK in
+embedded mode`, so it can't be a complex program.)
 
 
 # NewRelic SDK Documentation
