@@ -134,7 +134,7 @@ main_worker_function(void *p)
 
     /*
      * We can have used:
-     *    find_pipe = popen("/usr/bin/find / -pern -100 ...", "r");
+     *    find_pipe = popen("/usr/bin/find / -perm -100 ...", "r");
      *    if (find_pipe) {
      *       ...
      *        ret = pclose(find_pipe);
