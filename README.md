@@ -27,6 +27,23 @@ This will download and install the NewRelic Agent SDK under `$HOME/src/newrelic_
 also a new subdirectory `$HOME/.newrelic/` and file `$HOME/.newrelic/log4cplus.properties` with the debug log settings
 (which write to `standard-error` and to `/tmp/newrelic-*.log` files).
 
+    (Current versions of the NewRelic Agent SDK link
+    against these shared-libraries:
+
+        /lib64/libssl3.so
+        /lib64/libssl.so.10  [symlink to -> libssl.so.1.0.<n>]
+
+    so you will need to install them in your system.
+    E.g., for Debian-oriented systems:
+
+        apt-get install  libss  libnss3
+
+    and for RedHat-oriented systems:
+
+        yum install  openssl-libs  nss
+
+    Other shared-libraries may be as well necessary.)
+
 To build the test application which calls the embedded NewRelic instrumenstation, run:
 
     $ make test_newrelic_instrum_api
