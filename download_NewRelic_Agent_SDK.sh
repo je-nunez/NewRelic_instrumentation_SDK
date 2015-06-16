@@ -1,3 +1,4 @@
+#!/bin/bash
 
 BUILD_DIR=$HOME/src/newrelic_agent_sdk_installation/
 
