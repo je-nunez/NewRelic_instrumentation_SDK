@@ -28,7 +28,7 @@ help:
 test_newrelic_instrum_api: test_newrelic_instrum_api.c
 	cp test_newrelic_instrum_api.c $(BUILD_DIR)/
 	cd $(BUILD_DIR) && \
-	   $(CC) $(CFLAGS) $(LDFLAGS) -o  test_newrelic_instrum_api  test_newrelic_instrum_api.c
+	   $(CC)  $(CFLAGS) -o  test_newrelic_instrum_api  test_newrelic_instrum_api.c  $(LDFLAGS)
 
 
 

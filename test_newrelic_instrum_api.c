@@ -49,7 +49,7 @@ main(int argc, char** argv)
     newrelic_register_message_handler(newrelic_message_handler);
 
     newrelic_init(newrelic_license_key, "My Application", "C", "4.8");
-    // newrelic_enable_instrumentation(0);  /* 0 is enable */
+    // newrelic_enable_instrumentation(1);  /* 1 is enable */
 
 
     /* create the app worker thread to execute "main_worker_function()" */
