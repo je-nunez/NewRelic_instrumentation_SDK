@@ -14,6 +14,51 @@
 #include "newrelic_collector_client.h"
 
 
+/* The maximum length of a New Relic identifier.
+ *
+ * In:
+ *
+ *  https://docs.newrelic.com/docs/agents/php-agent/configuration/php-agent-api
+ *
+ * it is mentioned:
+ *
+ *  newrelic_record_custom_event:
+ *   ...
+ *   The attributes parameter is expected to be an associative array: the keys
+ *   should be the attribute names (which may be up to 255 characters in length)
+ *   ...
+ *
+ * so we limit our custom attributes also to be at most 255 chars in length
+ *
+ * The URL above also mentions on the NAMING CONVENTIONS for your custom
+ * attributes:
+ *
+ *  function newrelic_custom_metric (...)
+ *
+ *    ... Your custom metrics can then be used in custom dashboards and custom
+ *    views in the New Relic user interface. Name your custom metrics with a
+ *    Custom/ prefix (for example, Custom/MyMetric). This will make them easily
+ *    usable in custom dashboards...
+ *
+ * Also, on the NAMING CONVENTIONS for your custom attributes (URL below exceeds
+ * 80 columns):
+ *
+ *  https://docs.newrelic.com/docs/insights/new-relic-insights/decorating-events/insights-custom-attributes#keywords
+ *
+ * it lists some reserved words that New Relic understands, which should not be
+ * used as attribute names:
+ *
+ *     The following words are used by NRQL and by Insights. Avoid using
+ *     them as names for attributes. Otherwise the results may not be
+ *     what was expected.
+ *      .... [List of reserved words by New Relic] ....
+ *
+ * we add the preffix "ct_" to our attribute names to avouid any accidental
+ * conflict with New Relic of some identifier returned by the Linux Performance
+ * Counters.
+ */
+
+
 int
 usage_and_exit(void);
 
@@ -128,7 +173,7 @@ main_worker_function(void *p)
                     (unsigned)time(NULL));
 
          return_code = newrelic_transaction_add_attribute(newr_transxtion_id,
-                                                "tx_start_time", start_time);
+                                                "ct_tx_start_time", start_time);
 
     }
 
@@ -214,12 +259,12 @@ generate_lists_of_files(const char* tmp_file, long newrelic_transaction)
 
      record_newrelic_metric_from_first_value_of_kernel_stat_file(
             "/proc/sys/fs/dentry-state",
-            "cached_dentries_metric"
+            "Custom/ct_cached_dentries_metric"
           );
 
      record_newrelic_metric_from_first_value_of_kernel_stat_file(
             "/proc/sys/fs/inode-state",
-            "cached_inodes_metric"
+            "Custom/ct_cached_inodes_metric"
           );
 
     /* end this NewRelic segment */
@@ -318,8 +363,8 @@ process_lists_of_files(const char* tmp_file, long newrelic_transaction,
                      "%ld", numb_lines);
             int ret_code =
                  newrelic_transaction_add_attribute(newrelic_transaction,
-                                                    "NUMBER_EXECUTABLES",
-                                                    total_numb_executables);
+                                                "Custom/ct_NUMBER_EXECUTABLES",
+                                                total_numb_executables);
             if (ret_code < 0)
                 fprintf(stderr, "ERROR: newrelic_transaction_add_attribute() "
                                 "returned %d\n", ret_code);
