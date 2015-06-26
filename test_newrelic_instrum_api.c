@@ -131,6 +131,22 @@ main(int argc, char** argv)
     return 0;
 }
 
+
+void
+send_error_notice_to_NewRelic(long transaction_id, const char *exception_type,
+                              const char *error_message)
+{
+    fprintf(stderr, "ERROR: %s: %s\n", exception_type, error_message);
+
+    int err_code;
+    err_code = newrelic_transaction_notice_error(transaction_id, exception_type,
+                                                 error_message, "", "");
+    if (err_code != 0)
+        fprintf(stderr, "ERROR: Couldn't send error message to New Relic: "
+                        "returned error %d\n", err_code);
+}
+
+
 void*
 main_worker_function(void *p)
 {
@@ -138,9 +154,11 @@ main_worker_function(void *p)
 
     fprintf(stderr, "DEBUG: about to call newrelic_transaction_begin()\n");
     long newr_transxtion_id = newrelic_transaction_begin();
-    if (newr_transxtion_id < 0)
+    if (newr_transxtion_id < 0) {
         fprintf(stderr, "ERROR: newrelic_transaction_begin() returned %ld\n",
                         newr_transxtion_id);
+        exit(1);  /* No point continuing without a NewRelic transaction */
+    }
 
     /* Naming transactions is optional.
      * Use caution when naming transactions. Issues come about when the
@@ -149,33 +167,30 @@ main_worker_function(void *p)
      * poorly, your application may get blacklisted due to too many metrics
      * being sent to New Relic.
      */
-    if (newr_transxtion_id >= 0) {
-         return_code = newrelic_transaction_set_type_other(newr_transxtion_id);
-         if (return_code < 0)
-            fprintf(stderr, "ERROR: newrelic_transaction_set_type_other() "
-                            "returned %d\n", return_code);
+    return_code = newrelic_transaction_set_type_other(newr_transxtion_id);
+    if (return_code < 0)
+       fprintf(stderr, "ERROR: newrelic_transaction_set_type_other() "
+                       "returned %d\n", return_code);
 
-         return_code = newrelic_transaction_set_name(newr_transxtion_id,
-                                                    "find_biggest_executable");
-         if (return_code < 0)
-            fprintf(stderr, "ERROR: newrelic_transaction_set_name() "
-                            "returned %d\n", return_code);
+    return_code = newrelic_transaction_set_name(newr_transxtion_id,
+                                               "find_biggest_executable");
+    if (return_code < 0)
+       fprintf(stderr, "ERROR: newrelic_transaction_set_name() "
+                       "returned %d\n", return_code);
 
-         return_code = newrelic_transaction_set_category(newr_transxtion_id,
-                                                     "BackendTrans/Stat/find");
-         if (return_code < 0)
-            fprintf(stderr, "ERROR: newrelic_transaction_set_category() "
-                            "returned %d\n", return_code);
+    return_code = newrelic_transaction_set_category(newr_transxtion_id,
+                                                "BackendTrans/Stat/find");
+    if (return_code < 0)
+       fprintf(stderr, "ERROR: newrelic_transaction_set_category() "
+                       "returned %d\n", return_code);
 
-         /* Record an attribute for this transaction: the start time */
-         char start_time[16];
-         snprintf(start_time, sizeof start_time, "%u",
-                    (unsigned)time(NULL));
+    /* Record an attribute for this transaction: the start time */
+    char start_time[16];
+    snprintf(start_time, sizeof start_time, "%u",
+               (unsigned)time(NULL));
 
-         return_code = newrelic_transaction_add_attribute(newr_transxtion_id,
-                                                "ct_tx_start_time", start_time);
-
-    }
+    return_code = newrelic_transaction_add_attribute(newr_transxtion_id,
+                                           "ct_tx_start_time", start_time);
 
     /*
      * We can have used:
@@ -207,9 +222,12 @@ main_worker_function(void *p)
     struct stat buf;
     if (stat(temp_file, &buf) == 0) {
        return_code = unlink(temp_file);
-       if (return_code != 0)
-          fprintf(stderr, "ERROR: unlink(%s) failed: error code: %d\n",
-                  temp_file, return_code);
+       if (return_code != 0) {
+          char err_msg[256];
+          strerror_r(errno, err_msg, sizeof err_msg);
+          send_error_notice_to_NewRelic(newr_transxtion_id, "unlink_temp_file",
+                                        err_msg);
+       }
     }
     free(temp_file);
 
