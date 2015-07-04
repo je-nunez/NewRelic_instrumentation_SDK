@@ -14,6 +14,72 @@
 #include "newrelic_collector_client.h"
 
 
+int
+usage_and_exit(void);
+
+
+void
+main_worker_function(void);
+
+
+void
+record_newrelic_metric_from_first_value_of_kernel_stat_file(char * kernel_file,
+                char * newrelic_metric);
+
+
+int
+generate_lists_of_files(const char* tmp_file, long newrelic_transaction);
+
+
+int
+process_lists_of_files(const char* tmp_file, long newrelic_transaction,
+                       long* max_exec_size_found, char* max_exec_fname);
+
+
+/*
+ * The general idea of this C program is this flow:
+ *
+ *     main(...)
+ *             does some processing of the command-line and
+ *                   might call usage_and_exit()
+ *             set-ups New Relic
+ *             calls the worker function "main_worker_function(...)"
+ *
+ *
+ *    main_worker_function()
+ *             tries to create a New Relic transaction and some attributes
+ *                   like the name of the transaction
+ *             calls the first part of the task, by calling
+ *                   generate_lists_of_files(...)
+ *             calls the second part of the task, by calling 
+ *                   process_lists_of_files(...)
+ *             does cleanup
+ *             finishes the New Relic transaction
+ *
+ *
+ *    generate_lists_of_files(...)
+ *             creates a New Relic segment inside the main transaction, so
+ *                   as to associate this segment with this subtask
+ *             run some task; eg.:
+ *                   /usr/bin/find  / -type f -perm -100 -printf '%%s %%p\\n
+ *             collects some "hot" statistics (eg., from the Linux kernel)
+ *                   and sends the to New Relic
+ *             finishes the New Relic segment associated with this subtask
+ *             
+ *             
+ *    process_lists_of_files(...)
+ *             creates a New Relic segment inside the main transaction, so
+ *                   as to associate this segment with this subtask
+ *             does some processing of the results of the first subtask before
+ *             sends some results up to New Relic
+ *             finishes the New Relic segment associated with this subtask
+ *
+ *  There is more error-checking around those instructions, that is the general
+ *  idea of the program.
+ */
+
+
+
 /* The maximum length of a New Relic identifier.
  *
  * In:
@@ -57,28 +123,6 @@
  * conflict with New Relic of some identifier returned by the Linux Performance
  * Counters.
  */
-
-
-int
-usage_and_exit(void);
-
-
-void
-main_worker_function(void);
-
-
-void
-record_newrelic_metric_from_first_value_of_kernel_stat_file(char * kernel_file,
-                char * newrelic_metric);
-
-
-int
-generate_lists_of_files(const char* tmp_file, long newrelic_transaction);
-
-
-int
-process_lists_of_files(const char* tmp_file, long newrelic_transaction,
-                       long* max_exec_size_found, char* max_exec_fname);
 
 
 int
