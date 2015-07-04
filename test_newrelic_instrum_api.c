@@ -63,8 +63,8 @@ int
 usage_and_exit(void);
 
 
-void*
-main_worker_function(void* p);
+void
+main_worker_function(void);
 
 
 void
@@ -118,7 +118,7 @@ main(int argc, char** argv)
     }
     */
 
-    main_worker_function(NULL);
+    main_worker_function();
 
     /* wait for the application worker thread to finish */
     /*
@@ -147,8 +147,8 @@ send_error_notice_to_NewRelic(long transaction_id, const char *exception_type,
 }
 
 
-void*
-main_worker_function(void *p)
+void
+main_worker_function(void)
 {
     int return_code;
 
@@ -239,8 +239,6 @@ main_worker_function(void *p)
          fprintf(stderr, "ERROR: newrelic_transaction_end() "
                          "returned %d\n", return_code);
     }
-
-    return NULL;
 }
 
 
